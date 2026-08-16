@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: kimobe
+    runtime: static
+    repo: https://github.com/bshamloufard/Kimobe
+    branch: main
+    buildCommand: ""
+    staticPublishPath: .
+    pullRequestPreviewsEnabled: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
