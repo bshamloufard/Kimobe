@@ -95,18 +95,23 @@ const DiscoverySignal = ({
 
     const handlePointerMove = (e: PointerEvent) => setPointerFromEvent(e.clientX, e.clientY);
     const handlePointerDown = (e: PointerEvent) => setPointerFromEvent(e.clientX, e.clientY);
-    // Touch has no hover state — the field should only respond while a
-    // finger is actually down, and settle once it lifts or cancels.
-    const handlePointerEnd = () => {
+    // A mouse keeps hovering (and sending pointermove) regardless of
+    // whether a button is pressed, so a click's pointerup shouldn't turn
+    // the effect off. Touch has no hover state at all — it should only
+    // respond while a finger is actually down, and settle once it lifts.
+    const handlePointerUp = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') pointer.active = false;
+    };
+    const handlePointerGone = () => {
       pointer.active = false;
     };
 
     window.addEventListener('pointermove', handlePointerMove);
     window.addEventListener('pointerdown', handlePointerDown);
-    window.addEventListener('pointerup', handlePointerEnd);
-    window.addEventListener('pointercancel', handlePointerEnd);
-    window.addEventListener('pointerleave', handlePointerEnd);
-    window.addEventListener('blur', handlePointerEnd);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', handlePointerGone);
+    window.addEventListener('pointerleave', handlePointerGone);
+    window.addEventListener('blur', handlePointerGone);
 
     const drawChannel = (c: Channel, y: number, t: number) => {
       // Fade the line toward the screen edges — gives each trace
@@ -148,26 +153,53 @@ const DiscoverySignal = ({
       }
       ctx.stroke();
 
-      // Where the cursor is near, redraw that stretch brighter — as a true
-      // per-segment fade, not one flat overlay color. A canvas strokeStyle
-      // only applies to the whole path at stroke() time, so getting an
-      // actual gradient means stroking each short segment individually
-      // with its own alpha, eased so it brightens and fades smoothly
-      // instead of snapping on at a hard edge.
+      // Where the cursor is near, redraw that stretch brighter with a real
+      // canvas gradient — one stroke() per contiguous highlighted run,
+      // fading continuously through its color stops, rather than one flat
+      // overlay color (a single strokeStyle applies to a whole path) or
+      // hundreds of tiny individual strokes (expensive — each is its own
+      // draw call).
+      if (!pointer.active) return;
       ctx.lineWidth = c.weight + 0.6;
-      for (let i = 1; i < points.length; i++) {
-        const a = points[i - 1];
-        const b = points[i];
-        const pull = (a.pull + b.pull) / 2;
-        if (pull < 0.015) continue;
-        const eased = pull * pull;
-        const alpha = Math.min(0.6, peak + 0.65 * eased);
-        ctx.strokeStyle = `rgba(${traceColor}, ${alpha})`;
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(b.x, b.y);
-        ctx.stroke();
+      let runStart = -1;
+      for (let i = 0; i <= points.length; i++) {
+        const isHot = i < points.length && points[i].pull > 0.015;
+        if (isHot && runStart === -1) {
+          runStart = i;
+        } else if (!isHot && runStart !== -1) {
+          strokeHotRun(points, runStart, i - 1, peak);
+          runStart = -1;
+        }
       }
+    };
+
+    const strokeHotRun = (
+      points: { x: number; y: number; pull: number }[],
+      startIdx: number,
+      endIdx: number,
+      peak: number
+    ) => {
+      if (endIdx <= startIdx) return;
+      const p0 = points[startIdx];
+      const p1 = points[endIdx];
+      const span = p1.x - p0.x || 1;
+      const highlight = ctx.createLinearGradient(p0.x, 0, p1.x, 0);
+      for (let i = startIdx; i <= endIdx; i++) {
+        const p = points[i];
+        const offset = Math.min(Math.max((p.x - p0.x) / span, 0), 1);
+        const eased = p.pull * p.pull;
+        const alpha = Math.min(0.6, peak + 0.65 * eased);
+        highlight.addColorStop(offset, `rgba(${traceColor}, ${alpha})`);
+      }
+
+      ctx.beginPath();
+      ctx.strokeStyle = highlight;
+      for (let i = startIdx; i <= endIdx; i++) {
+        const p = points[i];
+        if (i === startIdx) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
     };
 
     let animationFrameId: number;
@@ -197,10 +229,10 @@ const DiscoverySignal = ({
       window.removeEventListener('resize', resize);
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerdown', handlePointerDown);
-      window.removeEventListener('pointerup', handlePointerEnd);
-      window.removeEventListener('pointercancel', handlePointerEnd);
-      window.removeEventListener('pointerleave', handlePointerEnd);
-      window.removeEventListener('blur', handlePointerEnd);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', handlePointerGone);
+      window.removeEventListener('pointerleave', handlePointerGone);
+      window.removeEventListener('blur', handlePointerGone);
       cancelAnimationFrame(animationFrameId);
     };
   }, [backgroundColor, traceColor, channelCount]);

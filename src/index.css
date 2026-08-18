@@ -127,4 +127,10 @@
   html {
     @apply font-sans;
     }
+  html, body {
+    /* Match the hero's actual background so the overscroll/rubber-band
+       bounce (macOS trackpad, iOS Safari) reveals cream, not white. */
+    background-color: #f7f5f1;
+    overscroll-behavior-y: none;
+    }
 }
