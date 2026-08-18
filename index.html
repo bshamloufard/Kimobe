@@ -77,62 +77,16 @@
       max-width: 620px;
     }
 
-    .credit {
-      margin-top: 12vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.9rem;
-      opacity: 0;
-      transform: translateY(8px);
-      animation: rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      animation-delay: 0.3s;
-    }
-
-    .caption {
-      font-family: var(--sf);
-      font-size: 0.92rem;
-      font-weight: 400;
-      color: var(--caption);
-      letter-spacing: 0.01em;
-    }
-
-    .logos {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-      column-gap: 2.75rem;
-      row-gap: 1.4rem;
-    }
-
-    /* Real brand marks, each recolored to one shared gray so they read as
-       a single set. Every file is already cropped tight to its own ink,
-       so one shared height keeps their cap-heights aligned; widths vary
-       naturally with each logo's real proportions. */
-    .logos img {
-      display: block;
-      flex-shrink: 0;
-      height: 20px;
-      width: auto;
-    }
-
     @keyframes rise {
       to { opacity: 1; transform: translateY(0); }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .hero, .credit {
+      .hero {
         animation: none;
         opacity: 1;
         transform: none;
       }
-    }
-
-    @media (max-width: 640px) {
-      .credit { margin-top: 8vh; }
-      .logos { column-gap: 1.6rem; }
-      .logos img { height: 17px; }
     }
   </style>
 </head>
@@ -144,18 +98,6 @@
       We&rsquo;re building an agent platform that helps researchers reason across the world&rsquo;s knowledge,
       run deeper investigations, and accelerate the path from hypothesis to breakthrough.
     </p>
-  </div>
-
-  <div class="credit">
-    <p class="caption">Built by engineers and researchers from</p>
-    <div class="logos">
-      <img class="logo-databricks" src="logos/databricks.svg" alt="Databricks" />
-      <img class="logo-mercor" src="logos/mercor.png" alt="Mercor" />
-      <img class="logo-amazon" src="logos/amazon.svg" alt="Amazon" />
-      <img class="logo-uber" src="logos/uber.svg" alt="Uber" />
-      <img class="logo-meta" src="logos/meta.svg" alt="Meta" />
-      <img class="logo-ramp" src="logos/ramp.svg" alt="Ramp" />
-    </div>
   </div>
 </body>
 </html>
