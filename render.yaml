@@ -4,8 +4,8 @@ services:
     runtime: static
     repo: https://github.com/bshamloufard/Kimobe
     branch: main
-    buildCommand: ""
-    staticPublishPath: .
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
     pullRequestPreviewsEnabled: false
     routes:
       - type: rewrite
