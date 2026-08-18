@@ -84,7 +84,11 @@ const DiscoverySignal = ({
     // response trails smoothly rather than snapping frame to frame.
     // Pointer Events unify mouse, touch, and pen, so this same state
     // drives both a mouse hover and a dragging finger on a phone.
-    const pointer = { targetX: -9999, targetY: -9999, x: -9999, y: -9999, active: false };
+    // `active` is "is there input right now" (a hard boolean); `strength`
+    // is "how much is it influencing the field" (eased toward 0 or 1) —
+    // decoupling the two means lifting a finger fades the effect out over
+    // a beat instead of snapping the traces back instantly.
+    const pointer = { targetX: -9999, targetY: -9999, x: -9999, y: -9999, active: false, strength: 0 };
 
     const setPointerFromEvent = (clientX: number, clientY: number) => {
       const rect = canvas.getBoundingClientRect();
@@ -139,11 +143,11 @@ const DiscoverySignal = ({
 
         let py = baseY;
         let pull = 0;
-        if (pointer.active) {
+        if (pointer.strength > 0.001) {
           const dx = x - pointer.x;
           const dy = baseY - pointer.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          pull = Math.exp(-(dist * dist) / (2 * 95 * 95));
+          pull = Math.exp(-(dist * dist) / (2 * 95 * 95)) * pointer.strength;
           py = baseY + (pointer.y - baseY) * pull * 0.55;
         }
 
@@ -159,7 +163,7 @@ const DiscoverySignal = ({
       // overlay color (a single strokeStyle applies to a whole path) or
       // hundreds of tiny individual strokes (expensive — each is its own
       // draw call).
-      if (!pointer.active) return;
+      if (pointer.strength < 0.001) return;
       ctx.lineWidth = c.weight + 0.6;
       let runStart = -1;
       for (let i = 0; i <= points.length; i++) {
@@ -211,6 +215,10 @@ const DiscoverySignal = ({
       // Smoothly trail the cursor rather than snapping to it.
       pointer.x += (pointer.targetX - pointer.x) * 0.14;
       pointer.y += (pointer.targetY - pointer.y) * 0.14;
+      // Ease the influence itself in and out — this is what makes a
+      // lifted finger release the traces gracefully instead of snapping
+      // them back to baseline the instant `active` flips false.
+      pointer.strength += ((pointer.active ? 1 : 0) - pointer.strength) * 0.09;
 
       ctx.fillStyle = backgroundColor;
       ctx.fillRect(0, 0, width, height);
@@ -220,7 +228,6 @@ const DiscoverySignal = ({
         const y = (i + 0.5) * spacing;
         drawChannel(c, y, t);
       });
-
       animationFrameId = requestAnimationFrame(render);
     };
     animationFrameId = requestAnimationFrame(render);
@@ -240,7 +247,7 @@ const DiscoverySignal = ({
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 block h-full w-full touch-none select-none"
+      className="absolute inset-0 block h-full w-full touch-pan-y select-none"
       style={{ backgroundColor }}
     />
   );

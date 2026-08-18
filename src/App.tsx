@@ -3,7 +3,7 @@ import DiscoverySignal from '@/components/discovery-signal'
 function App() {
   return (
     <main
-      className="relative min-h-dvh w-full touch-none select-none overflow-hidden bg-[#f7f5f1]"
+      className="relative min-h-dvh w-full touch-pan-y select-none overflow-hidden bg-[#f7f5f1]"
       style={{ WebkitTouchCallout: 'none' }}
     >
       <DiscoverySignal backgroundColor="#f7f5f1" />
