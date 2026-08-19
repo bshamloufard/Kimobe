@@ -1,4 +1,5 @@
 import DiscoverySignal from '@/components/discovery-signal'
+import Logo from '@/components/logo'
 
 function App() {
   return (
@@ -7,6 +8,10 @@ function App() {
       style={{ WebkitTouchCallout: 'none' }}
     >
       <DiscoverySignal backgroundColor="#f7f5f1" />
+
+      <div className="absolute left-[6vw] top-[8vh] z-10">
+        <Logo />
+      </div>
 
       <div className="relative z-10 flex min-h-dvh flex-col items-center justify-center px-[6vw] py-[8vh] text-center">
         <div className="flex max-w-[920px] flex-col items-center">
